@@ -5,7 +5,7 @@ import socket
 import abc
 
 
-main_fields = ['BU', 'ETU', 'ETB', 'EOU', 'EOB']
+main_fields = ['B', 'U', 'ET', 'EO']
 
 
 class SendError(Exception):
@@ -34,7 +34,7 @@ class BaseSender(abc.ABC):
         loc_data['type'] = name
         if time:
             loc_data['time'] = str(time)
-        loc_data['cur_time'] = str(datetime.datetime.now())
+        #loc_data['cur_time'] = str(datetime.datetime.now())
         return json.dumps(loc_data)
 
     def send_bucket(self, data: dict, time=None):

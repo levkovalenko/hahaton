@@ -1,5 +1,9 @@
+import datetime
+import collections
+
+
 class MomentCosts:
-    def __init__(self, val=None):
+    def __init__(self, date, val=None):
         if val is None:
             val = {
             'BU': 1,
@@ -10,10 +14,11 @@ class MomentCosts:
         }
         val['UB'] = 1/val['BU']
         #val['UET'] = 1/val['ETU']
-        val['BTE'] = 1/val['ETB']
+        val['BET'] = 1/val['ETB']
         #val['UEO'] = 1/val['EOU']
         val['BEO'] = 1/val['EOB']
         self.val = val
+        self.date = date
 
     def get_cost(self, l, r):
         if l == r:
@@ -26,18 +31,42 @@ class MomentCosts:
         return str(self.val)
 
 
-def get_best_value(cost_gener, start_val=None):
+def get_best_value(cost_gener, period, start_val=None):
     if start_val is None:
         start_val = {'B': 0.1, 'U': float('inf'), 'ET': float('inf'), 'EO': float('inf')}
-    val = ['B', 'U', 'EO']
+    val = ['B', 'U', 'EO', 'ET']
+    deq = collections.deque()
+    pred = dict()
+    sm = dict()
+    prev = None
     for mc in cost_gener:
-        old = start_val.copy()
-        for nfield in val:
-            for ofield in val:
-                t = mc.get_cost(ofield, nfield)
-                if t != -1:
-                    start_val[nfield] = min(start_val[nfield], old[ofield]/t)
-    return 1/start_val['B']
+        pred[mc.date] = {'B': ('B', prev), 'U': ('U', prev), 'EO': ('EO', prev), 'ET': ('ET', prev)}
+        prev = mc.date
+        deq.append((start_val.copy(), mc))
+        while deq[0][1].date + period < mc.date:
+            cmc = deq[0][1]
+            old = deq[0][0].copy()
+            deq.popleft()
+            for nfield in val:
+                for ofield in val:
+                    t = cmc.get_cost(ofield, nfield)
+                    if t != -1 and old[ofield]/t < start_val[nfield]:
+                        start_val[nfield] = old[ofield]/t
+                        pred[mc.date][nfield] = (ofield, cmc.date)
+            #print(start_val)
+        sm[mc.date] = {'B': (1/start_val['B'], start_val['B']), 'U': (1/start_val['U']*mc.get_cost('U', 'B'), start_val['U']),
+                       'EO': (1/start_val['EO']*mc.get_cost('EO', 'B'), start_val['EO']), 'ET': (1/start_val['ET']*mc.get_cost('ET', 'B'), start_val['ET'])}
+    res = collections.deque()
+    q = 'B'
+    key = prev
+    res.append((q, key, sm[key][q][0], 1/sm[key][q][1]))
+    while key is not None:
+        if len(res) == 1 or res[-1][0] != q:
+            res.append((q, key, sm[key][q][0], 1/sm[key][q][1]))
+        if res[-1][0] == q:
+            res[-1] = (res[-1][0], key, res[-1][2], res[-1][3])
+        q, key = pred[key][q]
+    return 1/start_val['B'], list(res)[::-1]
 
 
 if __name__ == '__main__':
