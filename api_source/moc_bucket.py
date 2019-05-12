@@ -21,3 +21,6 @@ class Bucket:
                 self.val[key] = self.val[key] + t
                 self.val['sum'] = self.val['sum'] + t*random.uniform(0.9, 1.1)
 
+    def get_next_update(self):
+        return self.last_update + self.period
+

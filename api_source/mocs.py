@@ -5,7 +5,7 @@ import time
 import datetime
 
 
-def http_bucket(period=10, moc_period=datetime.timedelta(seconds=5), url=None):
+def http_bucket(period=4, moc_period=datetime.timedelta(seconds=3), url=None):
     buc = moc.Bucket(period=moc_period)
     if url is None:
         s = sender.HTTPSender()
@@ -13,22 +13,22 @@ def http_bucket(period=10, moc_period=datetime.timedelta(seconds=5), url=None):
         s = sender.HTTPSender(url=url)
     while True:
         buc.update()
-        s.send_bucket(buc.val)
+        s.send_bucket(buc.val, time=buc.get_next_update())
         print(buc.val)
         time.sleep(period)
 
 
-def tcp_bucket(period=10, moc_period=datetime.timedelta(seconds=5), ip='localhost', port=9090):
+def tcp_bucket(period=4, moc_period=datetime.timedelta(seconds=3), ip='localhost', port=9090):
     buc = moc.Bucket(period=moc_period)
     s = sender.TCPSender(ip=ip, port=port)
     while True:
         buc.update()
-        s.send_bucket(buc.val)
+        s.send_bucket(buc.val, time=buc.get_next_update())
         print(buc.val)
         time.sleep(period)
 
 
-def tcp_pv(period=10, moc_period=datetime.timedelta(seconds=5), ip='localhost', port=9090):
+def tcp_pv(period=4, moc_period=datetime.timedelta(seconds=3), ip='localhost', port=9090):
     buc = pv.VolatilityPrice(period=moc_period)
     s = sender.TCPSender(ip=ip, port=port)
     while True:

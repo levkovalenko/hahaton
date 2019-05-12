@@ -29,15 +29,12 @@ class BaseSender(abc.ABC):
         :param time: time for sending
         :return: bode of sending request
         """
-        loc_data = dict()
-        for field in main_fields:
-            if field in data:
-                loc_data[field] = data[field]
+        loc_data = data.copy()
 
         loc_data['type'] = name
-        if time is None:
-            time = datetime.datetime.now()
-        loc_data['time'] = str(time)
+        if time:
+            loc_data['time'] = str(time)
+        loc_data['cur_time'] = str(datetime.datetime.now())
         return json.dumps(loc_data)
 
     def send_bucket(self, data: dict, time=None):
@@ -79,9 +76,10 @@ class TCPSender(BaseSender):
         :param data: data for sending
         :param time: time for sending
         """
-        str_data = self.dump_data(name, data, time)
+        str_data = self.dump_data(name, data, time=time)
 
         self.socket.send(str_data.encode())
+        print("was send", str_data)
 
     def connect(self):
         self.socket.connect((self.ip, self.port))
